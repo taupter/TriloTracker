@@ -11,7 +11,7 @@ FREE_SAMPLEFILE	equ $8000 - SWAP_SAMFILE_END
 
 ; Trilo-Tracker v0.2
 define VERSION "v0.11.4b SCC"
-define YEAR "2021"
+define YEAR "2026"
 define CHIPSET_CODE $00
 
 DEFINE TTSCC
@@ -38,18 +38,8 @@ MAIN:
 	call	start_init		; this calls function that is overwritten after call
 					; the space can be used by the songs 
 
-	; locate available SCC
-	ld	a,1
-	ld	(scc_type_check),a
+SCC_find:	; locate available SCC
 	call	find_SCC		;find SCC+
-
-	cp	255
-	jr.	nz,99f
-	
-	xor	a
-	ld	(scc_type_check),a
-	call	find_SCC		; find SCC
-99:	
 
 	;--- init correct period tabel from config
 	ld	a,(_CONFIG_PERIOD)

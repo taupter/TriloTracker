@@ -289,12 +289,13 @@ _PRE_INIT_LINE:
 
 psgport:	db	0
 ;-- SCC registers
-oldregs:	ds	32*4+3*5+1,255	; a way to int the SCC
+oldregs:	ds	(32*5)+(3*5)+1,255	; a way to int the SCC
 newregs:
 _0x9800:	ds	32
 _0x9820:	ds	32
 _0x9840:	ds	32
 _0x9860:	ds	32
+_0x9860_2:	ds	32
 _0x9880:	ds	5*2
 		ds	5*1
 		ds	1

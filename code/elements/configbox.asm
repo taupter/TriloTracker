@@ -68,9 +68,14 @@ draw_configbox:
 	call	draw_label
 
 IFDEF TTSCC
-	
+	ld	a,(SCC_type)
+	and	a
+	jp	z,99f
+	ld	de,_LABEL_CONFIG_SCC_2
+	jp	0f	
+99:	ld	de,_LABEL_CONFIG_SCC_1
+0:
 	ld	hl,(80*12)+2+40
-	ld	de,_LABEL_CONFIG_SCC_1
 	call	draw_label
 ELSE
 	ld	hl,(80*12)+2+40
@@ -156,6 +161,8 @@ ENDIF
 IFDEF TTSCC
 _LABEL_CONFIG_SCC_1:
 	db "SCC slot",0
+_LABEL_CONFIG_SCC_2:
+	db "SCC+ slot",0	
 ELSE
 _LABEL_CHAN_SETUP:
 	db "Channel setup",0

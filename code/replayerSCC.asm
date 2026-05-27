@@ -216,6 +216,11 @@ replay_decodedata:
 	ld	iyh,$60
 	ld	ix,TRACK_Chan7
 	call	replay_decode_chan
+	ld	a,(SCC_type)
+	and	a
+	jp	z,0f
+	ld	iyh,$80
+0:
 	ld	ix,TRACK_Chan8
 	call	replay_decode_chan
 
@@ -2978,7 +2983,19 @@ scc_route:
 	ld	de,_0x9860
 	call	_write_SCC_wave
 0:
+	ld	a,(SCC_type)
+	and	a
+	jp	z,0f
 
+	ld	hl,TRACK_Chan8+TRACK_Flags
+	bit	_TRG_WAV,(hl)
+	jr.	z,0f
+	;--- set wave form
+	res	_TRG_WAV,(hl)
+	ld	a,(TRACK_Chan8+TRACK_Waveform)
+	ld	de,_0x9860_2
+	call	_write_SCC_wave
+0:
 	ld	a,(SCC_slot)			; Recuperamos el slot
 	ld	h,0x80
 	call enaslt
@@ -2990,48 +3007,59 @@ scc_route:
 
 	call scc_reg_update
 
-
 	ld	a,(mapper_slot)				; Recuperamos el slot
 	ld	h,0x80
 	call enaslt
-
-
-
 	ret	
-
-
-
 
 			
 scc_reg_update:
+	ld	a,(SCC_type)
+	and	a
+	jp	z,99f
+	; --- SCC+ enable
+	ld   a,0x80
+	ld   (0xB000), a      ; Map SCC-I registers into page 3
+	ld   a, 0x20
+	ld   (0xBFFE), a      ; Unlock waveform RAM for writing
+	ld	bc,0xb800
+	ld 	a,32*5;+(3*5)+1
+	jp	0f
+	;--- SCC enable
+99:
+	ld  	a,0x3F				; enable SCC
+	ld  	(0x9000),a
+	ld	bc,0x9800
+	ld 	a,32*4;+(3*5)+1
 
-	ld  a,03Fh				; enable SCC
-	ld  (0x9000),a
 
+0:
 	;--- deformation register
-	ld hl,oldregs
-	ld de,newregs
-	ld bc,0x9800
-	ld a,32*4+3*5+1
-loop:
+	ld 	hl,oldregs
+	ld 	de,newregs
+	call	loop
+	ld 	hl,oldregs+32*5
+	ld 	de,_0x9880
+	ld	a,3*5+1
 
-	ex af,af'	;'
-	ld a,(de)
-	cp (hl)
-	jr z,1f
-	ld (hl),a	     ; update old	registers in ram
-	ld (bc),a	     ; update scc	registers
+99:
+loop:
+	ex 	af,af'	;'
+	ld 	a,(de)
+	cp 	(hl)
+	jr 	z,1f
+	ld 	(hl),a	     ; update old	registers in ram
+	ld 	(bc),a	     ; update scc	registers
 1:	    
-	inc hl
-	inc de
-	inc bc
-	ex af,af'		;'
-	dec a
-	jr nz, loop
+	inc 	hl
+	inc 	de
+	inc 	bc
+	ex 	af,af'		;'
+	dec 	a
+	jr 	nz, loop
 	ret
 
-	
-	
+
 ;==================
 ; _write_SCC_wave
 ;

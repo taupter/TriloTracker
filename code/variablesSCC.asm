@@ -127,6 +127,7 @@ prim_slot:		#1
 mapper_slot		#1
 SCC_slot:		#1	;scc slot
 SCC_slot_found:	#1	;scc slot where detection routine found SCC
+SCC_type:		#1	;SCC type (0 = scc, 1= SCC+)
 r800:			#1	; CPU mode
 
 vsf:		#1	; vdp type for correct playback on 60hz

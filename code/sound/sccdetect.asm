@@ -9,9 +9,12 @@ enaslt:          equ #0024
 exptbl:          equ #fcc1
 slttbl:          equ #fcc5
 
-scc_type_check:	db	0				 
+;scc_type_check:	db	0				 
 
 find_SCC:
+      xor   a
+      ld    (SCC_type),a
+
 	di
                  in a,(#a8)        ; read prim. slotregister
                  rra
@@ -40,35 +43,36 @@ testslot:        push af           ; save test-slot on the stack
                  ld h,#80
                  call enaslt       ; switch slot-to-test in 8000-bfffh
 
-	ld	a,(scc_type_check)		; 0 = scc, 1=scc+/scc-I
-	and	a
-	jr.	z,scc_test
-
-scci_test:
-                 ld hl,#b000
-                 ld b,(hl)         ; save contents of address 9000h
-                 ld (hl),#3f       ; activate SCC (if present)
-                 ld h,#9c          ; address of SCC-register mirrors
-                 ld de,#b800       ; 9800h = address of SCC-registers
-testregi:         ld a,(de)
-                 ld c,a            ; save contents of address 98xxh
-                 ld a,(hl)         ; read byte from address 9cxxh
-                 cpl               ; and invert it
-                 ld (de),a         ; write inverted byte to 98xxh
-                 cp (hl)           ; same value on 9cxxh ?
-                 ld a,c
-                 ld (de),a         ; restore value on 98xxh
-                 jr nz,nextslot    ; unequal -> no SCC -> continue search
-                 inc hl
-                 inc de            ; next test-addresses
-                 bit 7,l           ; 128 adresses (registers) tested ?
-                 jr z,testregi      ; no -> repeat mirror-test
-                 ld a,b
-                 ld (#b000),a      ; restore value on 9000h
-                 xor	a
-                 ld	($bfff),a	; Set SCC+ in SCC mode
-                 pop bc            ; retrieve slotcode (=SCC-slot) from stack
-                 jr done           ; SCC found, restore page 2-slot & return
+;                  ld	a,(scc_type_check)		; 0 = scc, 1=scc+/scc-I
+;                  and	a
+;                  jr.	z,scc_test
+;
+;scci_test:
+;                 ld hl,#b000
+;                 ld b,(hl)         ; save contents of address 9000h
+;                 ld (hl),#80       ; activate SCC (if present)
+;                 ld h,#bc          ; address of SCC-register mirrors
+;                 ld de,#b800       ; 9800h = address of SCC-registers
+;testregi:         ld a,(de)
+;                 ld c,a            ; save contents of address 98xxh
+;                 ld a,(hl)         ; read byte from address 9cxxh
+;                 cpl               ; and invert it
+;                 ld (de),a         ; write inverted byte to 98xxh
+;                 cp (hl)           ; same value on 9cxxh ?
+;                 ld a,c
+;                 ld (de),a         ; restore value on 98xxh
+;                 jr nz,nextslot    ; unequal -> no SCC -> continue search
+;                 inc hl
+;                 inc de            ; next test-addresses
+;                 bit 7,l           ; 128 adresses (registers) tested ?
+;                 jr z,testregi      ; no -> repeat mirror-test
+;                 ld a,b
+;                 ld (#b000),a      ; restore value on 9000h
+;                 ;TODO
+;                 xor	a
+;                 ld	($bfff),a	; Set SCC+ in SCC mode
+;                 pop bc            ; retrieve slotcode (=SCC-slot) from stack
+;                 jr done           ; SCC found, restore page 2-slot & return
 
 scc_test:
                  ld hl,#9000
@@ -91,6 +95,22 @@ testreg:         ld a,(de)
                  jr z,testreg      ; no -> repeat mirror-test
                  ld a,b
                  ld (#9000),a      ; restore value on 9000h
+            ;--- Now testif it is has SCC+
+                  ld   a,0x80
+                  ld   (0xB000), a      ; Map SCC-I registers into page 3
+	            ld   a, 0x20
+	            ld   (0xBFFE), a      ; Unlock waveform RAM for writing
+                 ld   hl,0xb800
+                  ld    a,(hl)
+                  inc   a
+                  ld    (hl),a
+                  cp    (hl)
+                  jr    nz,99f
+                  ld    a,1
+                  ld    (SCC_type),a
+99:
+;                  ld    a,0
+ ;                 ld    (0xbffe),a
                  pop bc            ; retrieve slotcode (=SCC-slot) from stack
                  jr done           ; SCC found, restore page 2-slot & return
 
